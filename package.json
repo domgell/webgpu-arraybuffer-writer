@@ -1,0 +1,19 @@
+{
+  "name": "@domgell/webgpu-arraybuffer-writer",
+  "version": "1.0.1",
+  "main": "src/index.ts",
+  "exports": "./src/index.ts",
+  "keywords": [
+    "webgpu",
+    "arraybuffer",
+    "buffer",
+    "writer",
+    "wgsl"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "Utility for writing data to an ArrayBuffer with correct WebGPU/WGSL alignment",
+  "dependencies": {
+    "@domgell/ts-util": "*"
+  }
+}
