@@ -8,6 +8,7 @@ to GPUBuffers.
 # Example
 
 ```wgsl
+// Struct in WGSL shader
 struct Particle {
     position: vec3f,
     velocity: vec3f,
@@ -17,8 +18,8 @@ struct Particle {
 
 ```ts
 const particle = {
-    position: {x: 10, y: 5},
-    velocity: {x: 0, y: 0},
+    position: {x: 10, y: 5, z: 0},
+    velocity: {x: 0, y: 0, z: 0},
     friction: 0.5,
 }
 
