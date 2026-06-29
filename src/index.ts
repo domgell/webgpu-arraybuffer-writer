@@ -1,4 +1,5 @@
-import {assert, fail, isArray, isTypedArrayNonBigInt, TypedArrayNonBigInt} from "@domgell/ts-util";
+import {LazyBufferView} from "@domgell/lazy-buffer-view";
+import {assert} from "@domgell/ts-util";
 
 /**
  * Write data to an `ArrayBuffer` with WGSL/WebGPU alignment
@@ -31,277 +32,85 @@ export interface ArrayBufferWriter {
      */
     skip(bytes: number): ArrayBufferWriter,
     /**
+     * Subtract `bytes` from `byteOffset`
+     */
+    back(bytes: number): ArrayBufferWriter,
+    /**
      * Write a `u32` value.
      * @param value
      */
     u32(value: number): ArrayBufferWriter,
     /**
-     * Write a `f32` value.
+     * Write an `f32` value.
      * @param value
      */
     f32(value: number): ArrayBufferWriter,
     /**
-     * Write a `i32` value.
+     * Write an `i32` value.
      * @param value
      */
     i32(value: number): ArrayBufferWriter,
     /**
-     * Write a `f16` value.
+     * Write an `f16` value.
+     * (Requires Float16 support in the browser)
      * @param value
      */
     f16(value: number): ArrayBufferWriter,
     /**
-     * Write a `vec2f` from individual `x, y` components.
-     * @param x
-     * @param y
-     * @param alignment - Default 8 (as in WGSL)
+     * Write a `vec2f` from `{x, y}`
      */
-    vec2f(x: number, y: number, alignment?: number): ArrayBufferWriter,
+    vec2f(value: { x: number, y: number }): ArrayBufferWriter,
     /**
-     * Write a `vec2f` from an object `{x, y}`.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
+     * Write a `vec3f` from `{x, y, z}`
      */
-    vec2f(v: { x: number, y: number }, alignment?: number): ArrayBufferWriter,
+    vec3f(value: { x: number, y: number, z: number }): ArrayBufferWriter,
     /**
-     * Write a `vec2f` from an array of at least 2 number elements.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
+     * Write a `vec4f` from `{x, y, z, w}`
      */
-    vec2f(v: Float32Array | number[], alignment?: number): ArrayBufferWriter,
+    vec4f(value: { x: number, y: number, z: number, w: number }): ArrayBufferWriter,
     /**
-     * Write a `vec3f` from individual `x, y, z` components.
-     * @param x
-     * @param y
-     * @param z
-     * @param alignment - Default 16 (as in WGSL)
+     * Write a `vec2u` from `{x, y}`
      */
-    vec3f(x: number, y: number, z: number, alignment?: number): ArrayBufferWriter,
+    vec2u(value: { x: number, y: number }): ArrayBufferWriter,
     /**
-     * Write a `vec3f` from an object `{x, y, z}`.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
+     * Write a `vec3u` from `{x, y, z}`
      */
-    vec3f(v: { x: number, y: number, z: number }, alignment?: number): ArrayBufferWriter,
+    vec3u(value: { x: number, y: number, z: number }): ArrayBufferWriter,
     /**
-     * Write a `vec3f` from an array of at least 3 number elements.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
+     * Write a `vec4u` from `{x, y, z, w}`
      */
-    vec3f(v: Float32Array | number[], alignment?: number): ArrayBufferWriter,
+    vec4u(value: { x: number, y: number, z: number, w: number }): ArrayBufferWriter,
     /**
-     * Write a `vec4f` from individual `x, y, z, w` components.
-     * @param x
-     * @param y
-     * @param z
-     * @param w
-     * @param alignment - Default 16 (as in WGSL)
+     * Write a `vec2i` from `{x, y}`
      */
-    vec4f(x: number, y: number, z: number, w: number, alignment?: number): ArrayBufferWriter,
+    vec2i(value: { x: number, y: number }): ArrayBufferWriter,
     /**
-     * Write a `vec4f` from an object `{x, y, z, w}`.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
+     * Write a `vec3i` from `{x, y, z}`
      */
-    vec4f(v: { x: number, y: number, z: number, w: number }, alignment?: number): ArrayBufferWriter,
+    vec3i(value: { x: number, y: number, z: number }): ArrayBufferWriter,
     /**
-     * Write a `vec4f` from an array of at least 4 number elements.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
+     * Write a `vec4i` from `{x, y, z, w}`
      */
-    vec4f(v: Float32Array | number[], alignment?: number): ArrayBufferWriter,
+    vec4i(value: { x: number, y: number, z: number, w: number }): ArrayBufferWriter,
     /**
-     * Write a `mat4x4f` from an array of at least 16 number elements.
-     * @param m
-     * @param alignment - Default 16 (as in WGSL)
+     * Write a `vec2h` from `{x, y}`
+     * (Requires Float16 support in the browser)
      */
-    mat4x4f(m: Float32Array | number[], alignment?: number): ArrayBufferWriter,
+    vec2h(value: { x: number, y: number }): ArrayBufferWriter,
     /**
-     * Write a `vec2h` from individual `x, y` components.
-     * @param x
-     * @param y
-     * @param alignment - Default 4 (as in WGSL)
+     * Write a `vec3h` from `{x, y, z}`
+     * (Requires Float16 support in the browser)
      */
-    vec2h(x: number, y: number, alignment?: number): ArrayBufferWriter,
+    vec3h(value: { x: number, y: number, z: number }): ArrayBufferWriter,
     /**
-     * Write a `vec2h` from an object `{x, y}`.
-     * @param v
-     * @param alignment - Default 4 (as in WGSL)
+     * Write a `vec4h` from `{x, y, z, w}`
+     * (Requires Float16 support in the browser)
      */
-    vec2h(v: { x: number, y: number }, alignment?: number): ArrayBufferWriter,
+    vec4h(value: { x: number, y: number, z: number, w: number }): ArrayBufferWriter,
     /**
-     * Write a `vec2h` from an array of at least 2 number elements.
-     * @param v
-     * @param alignment - Default 4 (as in WGSL)
+     * Write a `mat4x4f` from an array of at least 16 numbers.
      */
-    vec2h(v: Float32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3h` from individual `x, y, z` components.
-     * @param x
-     * @param y
-     * @param z
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec3h(x: number, y: number, z: number, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3h` from an object `{x, y, z}`.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec3h(v: { x: number, y: number, z: number }, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3h` from an array of at least 3 number elements.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec3h(v: Float32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4h` from individual `x, y, z, w` components.
-     * @param x
-     * @param y
-     * @param z
-     * @param w
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec4h(x: number, y: number, z: number, w: number, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4h` from an object `{x, y, z, w}`.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec4h(v: { x: number, y: number, z: number, w: number }, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec2u` from individual `x, y` components.
-     * @param x
-     * @param y
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec2u(x: number, y: number, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec2u` from an object `{x, y}`.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec2u(v: { x: number, y: number }, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec2u` from an array of at least 2 number elements.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec2u(v: Uint32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3u` from individual `x, y, z` components.
-     * @param x
-     * @param y
-     * @param z
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec3u(x: number, y: number, z: number, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3u` from an object `{x, y, z}`.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec3u(v: { x: number, y: number, z: number }, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3u` from an array of at least 3 number elements.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec3u(v: Uint32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4u` from individual `x, y, z, w` components.
-     * @param x
-     * @param y
-     * @param z
-     * @param w
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec4u(x: number, y: number, z: number, w: number, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4u` from an object `{x, y, z, w}`.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec4u(v: { x: number, y: number, z: number, w: number }, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4u` from an array of at least 4 number elements.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec4u(v: Uint32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec2i` from individual `x, y` components.
-     * @param x
-     * @param y
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec2i(x: number, y: number, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec2i` from an object `{x, y}`.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec2i(v: { x: number, y: number }, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec2i` from an array of at least 2 number elements.
-     * @param v
-     * @param alignment - Default 8 (as in WGSL)
-     */
-    vec2i(v: Int32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3i` from individual `x, y, z` components.
-     * @param x
-     * @param y
-     * @param z
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec3i(x: number, y: number, z: number, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3i` from an object `{x, y, z}`.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec3i(v: { x: number, y: number, z: number }, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec3i` from an array of at least 3 number elements.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec3i(v: Int32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4i` from individual `x, y, z, w` components.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec3i(v: Int32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4i` from individual `x, y, z, w` components.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec3i(v: Int32Array | number[], alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4i` from individual `x, y, z, w` components.
-     * @param x
-     * @param y
-     * @param z
-     * @param w
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec4i(x: number, y: number, z: number, w: number, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4i` from an object `{x, y, z, w}`.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec4i(v: { x: number, y: number, z: number, w: number }, alignment?: number): ArrayBufferWriter,
-    /**
-     * Write a `vec4i` from an array of at least 4 number elements.
-     * @param v
-     * @param alignment - Default 16 (as in WGSL)
-     */
-    vec4i(v: Int32Array | number[], alignment?: number): ArrayBufferWriter,
+    mat4x4f(value: ArrayLike<number>): ArrayBufferWriter,
 }
 
 /**
@@ -317,442 +126,228 @@ export function ArrayBufferWriter(byteSize: number): ArrayBufferWriter
  * @constructor
  */
 export function ArrayBufferWriter(arrayBuffer: ArrayBuffer, byteOffset?: number): ArrayBufferWriter
-
+/**
+ * @param arg
+ * @param byteOffset
+ * @constructor
+ */
 export function ArrayBufferWriter(arg: ArrayBuffer | number, byteOffset: number = 0): ArrayBufferWriter {
     const arrayBuffer = typeof arg === "number" ? new ArrayBuffer(arg) : arg;
-    const dw = new DataView(arrayBuffer);
+    return new ArrayBufferWriterImpl(arrayBuffer, byteOffset);
+}
 
-    const supportFloat16 = DataView.prototype.setFloat16 !== undefined;
+class ArrayBufferWriterImpl implements ArrayBufferWriter {
+    private readonly lw: LazyBufferView;
+    private readonly supportFloat16 = globalThis["Float16Array"] !== undefined;
+    byteAlignment: number = 1;
 
-    const writer = {
-        byteOffset,
-        byteAlignment: 1,
-        arrayBuffer,
-        u32(value) {
-            dw.setUint32(writer.byteOffset, value, true);
-            writer.byteOffset += 4;
-            return this;
-        },
-        f32(value) {
-            dw.setFloat32(writer.byteOffset, value, true);
-            writer.byteOffset += 4;
-            return this;
-        },
-        i32(value) {
-            dw.setInt32(writer.byteOffset, value, true);
-            writer.byteOffset += 4;
-            return this;
-        },
-        f16(value) {
-            assert(supportFloat16, "Missing DataView `float16` support");
-            dw.setFloat16(writer.byteOffset, value, true);
-            writer.byteOffset += 2;
-            return this;
-        },
-        align(bytes) {
-            writer.byteOffset = alignTo(writer.byteOffset, bytes);
-            writer.byteAlignment = Math.max(writer.byteAlignment, bytes);
-            return this;
-        },
-        reset() {
-            writer.byteAlignment = 1;
-            writer.byteOffset = 0;
-            return this;
-        },
-        skip(bytes) {
-            writer.byteOffset += bytes;
-            return this;
-        },
-        vec2f(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number
-            if (typeof first === "number") {
-                const [x, y, alignment = 8] = args;
-                writer.align(alignment);
-                writer.f32(x);
-                writer.f32(y);
-            }
-            // {x: number, y: number}
-            else if ("x" in first && "y" in first) {
-                const [v, alignment = 8] = args;
-                writer.align(alignment);
-                writer.f32(v.x);
-                writer.f32(v.y);
-            }
-            // number[] | Float32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 8] = args;
-                assert(arr.length >= 2, "`vec2f` requires at least 2 elements.");
-                writer.align(alignment);
-                writer.f32(arr[0]);
-                writer.f32(arr[1]);
-            } else {
-                fail("Invalid type, expected `vec2f` compatible type");
-            }
+    constructor(
+        readonly arrayBuffer: ArrayBuffer,
+        public byteOffset: number = 0,
+    ) {
+        this.lw = LazyBufferView(arrayBuffer);
+    }
 
-            return this;
-        },
-        vec3f(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number, z: number
-            if (typeof first === "number") {
-                const [x, y, z, alignment = 16] = args;
-                writer.align(alignment);
-                writer.f32(x);
-                writer.f32(y);
-                writer.f32(z);
-            }
-            // {x: number, y: number}
-            else if ("x" in first && "y" in first && "z" in first) {
-                const [v, alignment = 16] = args;
-                writer.align(alignment);
-                writer.f32(v.x);
-                writer.f32(v.y);
-                writer.f32(v.z);
-            }
-            // number[] | Float32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 16] = args;
-                assert(arr.length >= 3, "`vec3f` requires at least 3 elements.");
-                writer.align(alignment);
-                writer.f32(arr[0]);
-                writer.f32(arr[1]);
-                writer.f32(arr[2]);
-            } else {
-                fail("Invalid type, expected `vec3f` compatible type");
-            }
+    align(bytes: number): ArrayBufferWriter {
+        this.byteOffset = alignTo(this.byteOffset, bytes);
+        this.byteAlignment = Math.max(this.byteAlignment, bytes);
+        return this;
+    }
 
-            return this;
-        },
-        vec4f(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number, z: number, w: number
-            if (typeof first === "number") {
-                const [x, y, z, w, alignment = 16] = args;
-                writer.align(alignment);
-                writer.f32(x);
-                writer.f32(y);
-                writer.f32(z);
-                writer.f32(w);
-            }
-            // {x: number, y: number}
-            else if ("x" in first && "y" in first && "z" in first && "w" in first) {
-                const [v, alignment = 16] = args;
-                writer.align(alignment);
-                writer.f32(v.x);
-                writer.f32(v.y);
-                writer.f32(v.z);
-                writer.f32(v.w);
-            }
-            // number[] | Float32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 16] = args;
-                assert(arr.length >= 4, "`vec4f` requires at least 4 elements.");
-                writer.align(alignment);
-                writer.f32(arr[0]);
-                writer.f32(arr[1]);
-                writer.f32(arr[2]);
-                writer.f32(arr[3]);
-            } else {
-                fail("Invalid type, expected `vec4f` compatible type");
-            }
+    reset(): ArrayBufferWriter {
+        this.byteOffset = 0;
+        this.byteAlignment = 0;
+        return this;
+    }
 
-            return this;
-        },
-        mat4x4f(m, alignment = 16) {
-            assert(m.length >= 16, "`mat4x4f` requires at least 16 elements");
-            writer.align(alignment);
-            for (let i = 0; i < 16; i++) {
-                writer.f32(m[i]);
-            }
+    skip(bytes: number): ArrayBufferWriter {
+        this.byteOffset += bytes;
+        return this;
+    }
 
-            return this;
-        },
-        vec2h(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number
-            if (typeof first === "number") {
-                const [x, y, alignment = 4] = args;
-                writer.align(alignment);
-                writer.f16(x);
-                writer.f16(y);
-            }
-            // {x: number, y: number}
-            else if ("x" in first && "y" in first) {
-                const [v, alignment = 4] = args;
-                writer.align(alignment);
-                writer.f16(v.x);
-                writer.f16(v.y);
-            }
-            // number[] | Float32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 4] = args;
-                assert(arr.length >= 2, "`vec2h` requires at least 2 elements.");
-                writer.align(alignment);
-                writer.f16(arr[0]);
-                writer.f16(arr[1]);
-            } else {
-                fail("Invalid type, expected `vec2h` compatible type");
-            }
+    back(bytes: number): ArrayBufferWriter {
+        this.byteOffset -= bytes;
+        this.byteOffset = Math.max(this.byteOffset, 0);
+        return this;
+    }
 
-            return this;
-        },
-        vec3h(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number, z: number
-            if (typeof first === "number") {
-                const [x, y, z, alignment = 8] = args;
-                writer.align(alignment);
-                writer.f16(x);
-                writer.f16(y);
-                writer.f16(z);
-            }
-            // {x: number, y: number}
-            else if ("x" in first && "y" in first && "z" in first) {
-                const [v, alignment = 8] = args;
-                writer.align(alignment);
-                writer.f16(v.x);
-                writer.f16(v.y);
-                writer.f16(v.z);
-            }
-            // number[] | Float32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 8] = args;
-                assert(arr.length >= 3, "`vec3h` requires at least 3 elements.");
-                writer.align(alignment);
-                writer.f16(arr[0]);
-                writer.f16(arr[1]);
-                writer.f16(arr[2]);
-            } else {
-                fail("Invalid type, expected `vec3h` compatible type");
-            }
+    u32(value: number): ArrayBufferWriter {
+        const offset = this.byteOffset / 4;
+        this.lw.uint32Array[offset] = value;
+        this.byteOffset += 4;
+        return this;
+    }
 
-            return this;
-        },
-        vec4h(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number, z: number, w: number
-            if (typeof first === "number") {
-                const [x, y, z, w, alignment = 8] = args;
-                writer.align(alignment);
-                writer.f16(x);
-                writer.f16(y);
-                writer.f16(z);
-                writer.f16(w);
-            }
-            // {x: number, y: number}
-            else if ("x" in first && "y" in first && "z" in first && "w" in first) {
-                const [v, alignment = 8] = args;
-                writer.align(alignment);
-                writer.f16(v.x);
-                writer.f16(v.y);
-                writer.f16(v.z);
-                writer.f16(v.w);
-            }
-            // number[] | Float32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 8] = args;
-                assert(arr.length >= 4, "`vec4h` requires at least 4 elements.");
-                writer.align(alignment);
-                writer.f16(arr[0]);
-                writer.f16(arr[1]);
-                writer.f16(arr[2]);
-                writer.f16(arr[3]);
-            } else {
-                fail("Invalid type, expected `vec4h` compatible type");
-            }
+    f32(value: number): ArrayBufferWriter {
+        const offset = this.byteOffset / 4;
+        this.lw.float32Array[offset] = value;
+        this.byteOffset += 4;
+        return this;
+    }
 
-            return this;
-        },
-        vec2u(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number
-            if (typeof first === "number") {
-                const [x, y, alignment = 8] = args;
-                writer.align(alignment);
-                writer.u32(x);
-                writer.u32(y);
-            }
-            // {x: number, y: number}
-            else if ("x" in first && "y" in first) {
-                const [v, alignment = 8] = args;
-                writer.align(alignment);
-                writer.u32(v.x);
-                writer.u32(v.y);
-            }
-            // number[] | Uint32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 8] = args;
-                assert(arr.length >= 2, "`vec2u` requires at least 2 elements.");
-                writer.align(alignment);
-                writer.u32(arr[0]);
-                writer.u32(arr[1]);
-            } else {
-                fail("Invalid type, expected `vec2u` compatible type");
-            }
-            return this;
-        },
-        vec3u(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number, z: number
-            if (typeof first === "number") {
-                const [x, y, z, alignment = 16] = args;
-                writer.align(alignment);
-                writer.u32(x);
-                writer.u32(y);
-                writer.u32(z);
-            }
-            // {x: number, y: number, z: number}
-            else if ("x" in first && "y" in first && "z" in first) {
-                const [v, alignment = 16] = args;
-                writer.align(alignment);
-                writer.u32(v.x);
-                writer.u32(v.y);
-                writer.u32(v.z);
-            }
-            // number[] | Uint32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 16] = args;
-                assert(arr.length >= 3, "`vec3u` requires at least 3 elements.");
-                writer.align(alignment);
-                writer.u32(arr[0]);
-                writer.u32(arr[1]);
-                writer.u32(arr[2]);
-            } else {
-                fail("Invalid type, expected `vec3u` compatible type");
-            }
-            return this;
-        },
-        vec4u(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number, z: number, w: number
-            if (typeof first === "number") {
-                const [x, y, z, w, alignment = 16] = args;
-                writer.align(alignment);
-                writer.u32(x);
-                writer.u32(y);
-                writer.u32(z);
-                writer.u32(w);
-            }
-            // {x: number, y: number, z: number, w: number}
-            else if ("x" in first && "y" in first && "z" in first && "w" in first) {
-                const [v, alignment = 16] = args;
-                writer.align(alignment);
-                writer.u32(v.x);
-                writer.u32(v.y);
-                writer.u32(v.z);
-                writer.u32(v.w);
-            }
-            // number[] | Uint32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 16] = args;
-                assert(arr.length >= 4, "`vec4u` requires at least 4 elements.");
-                writer.align(alignment);
-                writer.u32(arr[0]);
-                writer.u32(arr[1]);
-                writer.u32(arr[2]);
-                writer.u32(arr[3]);
-            } else {
-                fail("Invalid type, expected `vec4u` compatible type");
-            }
-            return this;
-        },
-        vec2i(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number
-            if (typeof first === "number") {
-                const [x, y, alignment = 8] = args;
-                writer.align(alignment);
-                writer.i32(x);
-                writer.i32(y);
-            }
-            // {x: number, y: number}
-            else if ("x" in first && "y" in first) {
-                const [v, alignment = 8] = args;
-                writer.align(alignment);
-                writer.i32(v.x);
-                writer.i32(v.y);
-            }
-            // number[] | Int32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 8] = args;
-                assert(arr.length >= 2, "`vec2i` requires at least 2 elements.");
-                writer.align(alignment);
-                writer.i32(arr[0]);
-                writer.i32(arr[1]);
-            } else {
-                fail("Invalid type, expected `vec2i` compatible type");
-            }
-            return this;
-        },
-        vec3i(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number, z: number
-            if (typeof first === "number") {
-                const [x, y, z, alignment = 16] = args;
-                writer.align(alignment);
-                writer.i32(x);
-                writer.i32(y);
-                writer.i32(z);
-            }
-            // {x: number, y: number, z: number}
-            else if ("x" in first && "y" in first && "z" in first) {
-                const [v, alignment = 16] = args;
-                writer.align(alignment);
-                writer.i32(v.x);
-                writer.i32(v.y);
-                writer.i32(v.z);
-            }
-            // number[] | Int32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 16] = args;
-                assert(arr.length >= 3, "`vec3i` requires at least 3 elements.");
-                writer.align(alignment);
-                writer.i32(arr[0]);
-                writer.i32(arr[1]);
-                writer.i32(arr[2]);
-            } else {
-                fail("Invalid type, expected `vec3i` compatible type");
-            }
-            return this;
-        },
-        vec4i(...args: any[]) {
-            const first = args[0];
-            // x: number, y: number, z: number, w: number
-            if (typeof first === "number") {
-                const [x, y, z, w, alignment = 16] = args;
-                writer.align(alignment);
-                writer.i32(x);
-                writer.i32(y);
-                writer.i32(z);
-                writer.i32(w);
-            }
-            // {x: number, y: number, z: number, w: number}
-            else if ("x" in first && "y" in first && "z" in first && "w" in first) {
-                const [v, alignment = 16] = args;
-                writer.align(alignment);
-                writer.i32(v.x);
-                writer.i32(v.y);
-                writer.i32(v.z);
-                writer.i32(v.w);
-            }
-            // number[] | Int32Array
-            else if (isArray(first) || isTypedArrayNonBigInt(first)) {
-                const [arr, alignment = 16] = args;
-                assert(arr.length >= 4, "`vec4i` requires at least 4 elements.");
-                writer.align(alignment);
-                writer.i32(arr[0]);
-                writer.i32(arr[1]);
-                writer.i32(arr[2]);
-                writer.i32(arr[3]);
-            } else {
-                fail("Invalid type, expected `vec4i` compatible type");
-            }
-            return this;
-        },
-    } satisfies ArrayBufferWriter;
+    i32(value: number): ArrayBufferWriter {
+        const offset = this.byteOffset / 4;
+        this.lw.int32Array[offset] = value;
+        this.byteOffset += 4;
+        return this;
+    }
 
-    return writer;
+    f16(value: number): ArrayBufferWriter {
+        assert(this.supportFloat16, "Float16 support is not available in this browser");
+
+        const offset = this.byteOffset / 2;
+        this.lw.float16Array[offset] = value;
+        this.byteOffset += 2;
+        return this;
+    }
+
+    vec2f(value: { x: number; y: number; }): ArrayBufferWriter {
+        this.align(8);
+        const offset = this.byteOffset / 4;
+        const float32Array = this.lw.float32Array;
+        float32Array[offset] = value.x;
+        float32Array[offset + 1] = value.y;
+        this.byteOffset += 8;
+        return this;
+    }
+
+    vec3f(value: { x: number; y: number; z: number; }): ArrayBufferWriter {
+        this.align(16);
+        const offset = this.byteOffset / 4;
+        const float32Array = this.lw.float32Array;
+        float32Array[offset] = value.x;
+        float32Array[offset + 1] = value.y;
+        float32Array[offset + 2] = value.z;
+        this.byteOffset += 12;
+        return this;
+    }
+
+    vec4f(value: { x: number; y: number; z: number; w: number; }): ArrayBufferWriter {
+        this.align(16);
+        const offset = this.byteOffset / 4;
+        const float32Array = this.lw.float32Array;
+        float32Array[offset] = value.x;
+        float32Array[offset + 1] = value.y;
+        float32Array[offset + 2] = value.z;
+        float32Array[offset + 3] = value.w;
+        this.byteOffset += 16;
+        return this;
+    }
+
+    vec2u(value: { x: number; y: number; }): ArrayBufferWriter {
+        this.align(8);
+        const offset = this.byteOffset / 4;
+        const uint32Array = this.lw.uint32Array;
+        uint32Array[offset] = value.x;
+        uint32Array[offset + 1] = value.y;
+        this.byteOffset += 8;
+        return this;
+    }
+
+    vec3u(value: { x: number; y: number; z: number; }): ArrayBufferWriter {
+        this.align(16);
+        const offset = this.byteOffset / 4;
+        const uint32Array = this.lw.uint32Array;
+        uint32Array[offset] = value.x;
+        uint32Array[offset + 1] = value.y;
+        uint32Array[offset + 2] = value.z;
+        this.byteOffset += 12;
+        return this;
+    }
+
+    vec4u(value: { x: number; y: number; z: number; w: number; }): ArrayBufferWriter {
+        this.align(16);
+        const offset = this.byteOffset / 4;
+        const uint32Array = this.lw.uint32Array;
+        uint32Array[offset] = value.x;
+        uint32Array[offset + 1] = value.y;
+        uint32Array[offset + 2] = value.z;
+        uint32Array[offset + 3] = value.w;
+        this.byteOffset += 16;
+        return this;
+    }
+
+    vec2i(value: { x: number; y: number; }): ArrayBufferWriter {
+        this.align(8);
+        const offset = this.byteOffset / 4;
+        const int32Array = this.lw.int32Array;
+        int32Array[offset] = value.x;
+        int32Array[offset + 1] = value.y;
+        this.byteOffset += 8;
+        return this;
+    }
+
+    vec3i(value: { x: number; y: number; z: number; }): ArrayBufferWriter {
+        this.align(16);
+        const offset = this.byteOffset / 4;
+        const int32Array = this.lw.int32Array;
+        int32Array[offset] = value.x;
+        int32Array[offset + 1] = value.y;
+        int32Array[offset + 2] = value.z;
+        this.byteOffset += 12;
+        return this;
+    }
+
+    vec4i(value: { x: number; y: number; z: number; w: number; }): ArrayBufferWriter {
+        this.align(16);
+        const offset = this.byteOffset / 4;
+        const int32Array = this.lw.int32Array;
+        int32Array[offset] = value.x;
+        int32Array[offset + 1] = value.y;
+        int32Array[offset + 2] = value.z;
+        int32Array[offset + 3] = value.w;
+        this.byteOffset += 16;
+        return this;
+    }
+
+    vec2h(value: { x: number; y: number; }): ArrayBufferWriter {
+        assert(this.supportFloat16, "Float16 support is not available in this browser");
+
+        this.align(4);
+        const offset = this.byteOffset / 2;
+        const float16Array = this.lw.float16Array;
+        float16Array[offset] = value.x;
+        float16Array[offset + 1] = value.y;
+        this.byteOffset += 4;
+        return this;
+    }
+
+    vec3h(value: { x: number; y: number; z: number; }): ArrayBufferWriter {
+        assert(this.supportFloat16, "Float16 support is not available in this browser");
+
+        this.align(8);
+        const offset = this.byteOffset / 2;
+        const float16Array = this.lw.float16Array;
+        float16Array[offset] = value.x;
+        float16Array[offset + 1] = value.y;
+        float16Array[offset + 2] = value.z;
+        this.byteOffset += 6;
+        return this;
+    }
+
+    vec4h(value: { x: number; y: number; z: number; w: number; }): ArrayBufferWriter {
+        assert(this.supportFloat16, "Float16 support is not available in this browser");
+
+        this.align(8);
+        const offset = this.byteOffset / 2;
+        const float16Array = this.lw.float16Array;
+        float16Array[offset] = value.x;
+        float16Array[offset + 1] = value.y;
+        float16Array[offset + 2] = value.z;
+        float16Array[offset + 3] = value.w;
+        this.byteOffset += 8;
+        return this;
+    }
+
+    mat4x4f(value: number[] | Float32Array): ArrayBufferWriter {
+        assert(value.length >= 16, "mat4x4f requires at least 16 elements");
+
+        this.align(16);
+        const offset = this.byteOffset / 4;
+        this.lw.float32Array.set(value, offset);
+        this.byteOffset += 64;
+        return this;
+    }
 }
 
 function alignTo(offset: number, align: number) {
